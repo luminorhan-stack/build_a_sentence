@@ -125,8 +125,9 @@
             document.getElementById('bannerExit').addEventListener('click', exitSpecialMode);
 
             // 筛选
-            ['fScenario', 'fPolarity', 'fFunction', 'fStructure', 'fPurpose'].forEach(id => {
-                document.getElementById(id).addEventListener('change', applyFilters);
+            ['fScenario', 'fPolarity', 'fFunction', 'fStructure', 'fPurpose', 'fDifficulty'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('change', applyFilters);
             });
             document.getElementById('fKeyword').addEventListener('input', debounce(applyFilters, 250));
             document.getElementById('fReset').addEventListener('click', resetAllFilters);
@@ -186,7 +187,7 @@
          * 题库总表（数据库视图）
          * ================================================================ */
         const BT_PAGE_SIZE = 100;
-        let btState = { page: 1, sortKey: 'id', sortDir: 1, filters: { kw: '', source: '', scenario: '', polarity: '', func: '', structure: '', purpose: '' } };
+        let btState = { page: 1, sortKey: 'id', sortDir: 1, filters: { kw: '', source: '', scenario: '', polarity: '', func: '', structure: '', purpose: '', difficulty: '' } };
 
         function btInit() {
             const dims = [
@@ -200,12 +201,20 @@
                 el.innerHTML = `<option value="">全部${label}</option>` + vals.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
                 el.addEventListener('change', () => { btState.filters[key] = el.value; btState.page = 1; renderBankTable(); });
             });
+            // 难度筛选
+            const btd = document.getElementById('btDifficulty');
+            if (btd) {
+                const dlabels = { 1: '★ 入门', 2: '★★ 基础', 3: '★★★ 中等', 4: '★★★★ 进阶', 5: '★★★★★ 挑战' };
+                btd.innerHTML = '<option value="">全部难度</option>' + [1, 2, 3, 4, 5].map(v => `<option value="${v}">${dlabels[v]}</option>`).join('');
+                btd.addEventListener('change', () => { btState.filters.difficulty = btd.value; btState.page = 1; renderBankTable(); });
+            }
             const kw = document.getElementById('btKeyword');
             kw.addEventListener('input', debounce(() => { btState.filters.kw = kw.value.trim().toLowerCase(); btState.page = 1; renderBankTable(); }, 250));
             document.getElementById('btReset').addEventListener('click', () => {
-                btState = { page: 1, sortKey: 'id', sortDir: 1, filters: { kw: '', source: '', scenario: '', polarity: '', func: '', structure: '', purpose: '' } };
+                btState = { page: 1, sortKey: 'id', sortDir: 1, filters: { kw: '', source: '', scenario: '', polarity: '', func: '', structure: '', purpose: '', difficulty: '' } };
                 kw.value = '';
                 dims.forEach(([selId]) => { document.getElementById(selId).value = ''; });
+                if (btd) btd.value = '';
                 renderBankTable();
             });
         }
@@ -223,6 +232,7 @@
                 if (f.func && q.sentenceFunction !== f.func) return false;
                 if (f.structure && q.sentenceStructure !== f.structure) return false;
                 if (f.purpose && q.purpose !== f.purpose) return false;
+                if (f.difficulty && String(q.difficulty || 3) !== f.difficulty) return false;
                 if (f.kw) {
                     const hay = `${q.id} ${q.prompt || ''} ${q.questionText || ''} ${q.correctAnswer || ''} ${q.explanation || ''}`.toLowerCase();
                     if (!hay.includes(f.kw)) return false;
@@ -242,6 +252,7 @@
                 case 'structure': return q.sentenceStructure || '';
                 case 'grammar': return q.grammar || '';
                 case 'purpose': return q.purpose || '';
+                case 'difficulty': return q.difficulty != null ? String(q.difficulty).padStart(2, '0') : '03';
                 case 'sample': return q.correctAnswer || '';
                 default: return '';
             }
@@ -262,7 +273,7 @@
             document.getElementById('btCount').textContent = `${list.length} 题 · 第 ${btState.page}/${totalPages} 页`;
 
             const cols = [
-                ['id', '题号'], ['date', '日期'], ['source', '套题'], ['scenario', '场景'],
+                ['id', '题号'], ['date', '日期'], ['source', '套题'], ['difficulty', '难度'], ['scenario', '场景'],
                 ['polarity', '肯/否'], ['func', '句子功能'], ['structure', '句子结构'],
                 ['grammar', '语法'], ['purpose', '交际目的'], ['sample', '范答']
             ];
@@ -276,6 +287,7 @@
                     + `<td class="bt-id">${escapeHtml(q.id)}</td>`
                     + `<td>${escapeHtml(q.date || '—')}</td>`
                     + `<td>${escapeHtml(q.source || '—')}</td>`
+                    + `<td class="diff-cell">${diffStarsHTML(q.difficulty)}</td>`
                     + `<td>${chip(q.scenario)}</td>`
                     + `<td>${chip(q.polarity, 'c-blue')}</td>`
                     + `<td>${chip(q.sentenceFunction)}</td>`
@@ -416,6 +428,22 @@
             fillSelect('fFunction', vals('sentenceFunction'), '全部句子功能');
             fillSelect('fStructure', vals('sentenceStructure'), '全部句子结构');
             fillSelect('fPurpose', vals('purpose'), '全部交际目的');
+            // 难度筛选（1-5 整数，统一格式）
+            const dsel = document.getElementById('fDifficulty');
+            if (dsel) {
+                const dvals = [...new Set(questions.map(q => q.difficulty).filter(v => v >= 1 && v <= 5))].sort((a, b) => a - b);
+                const dlabels = { 1: '★ 入门', 2: '★★ 基础', 3: '★★★ 中等', 4: '★★★★ 进阶', 5: '★★★★★ 挑战' };
+                dsel.innerHTML = '<option value="">全部难度</option>' + dvals.map(v => `<option value="${v}">${dlabels[v] || '难度' + v}</option>`).join('');
+            }
+        }
+
+        // 难度星标 HTML（金色实星 + 灰色空星，共 5 格）
+        function diffStarsHTML(level, cellClass) {
+            const lv = Math.min(5, Math.max(0, parseInt(level, 10) || 0));
+            const cls = cellClass || 'difficulty-stars';
+            let html = '';
+            for (let i = 1; i <= 5; i++) html += `<span class="${i <= lv ? 'ds-on' : 'ds-off'}">★</span>`;
+            return `<span class="${cls}" title="难度 ${lv}/5">${html}</span>`;
         }
 
         function fillSelect(id, values, allLabel) {
@@ -432,6 +460,7 @@
             const fn = document.getElementById('fFunction').value;
             const st = document.getElementById('fStructure').value;
             const pu = document.getElementById('fPurpose').value;
+            const df = document.getElementById('fDifficulty') ? document.getElementById('fDifficulty').value : '';
             const kw = document.getElementById('fKeyword').value.trim().toLowerCase();
             return questions.filter(q => {
                 if (sc && (q.scenario || '未分类') !== sc) return false;
@@ -439,6 +468,7 @@
                 if (fn && (q.sentenceFunction || '未分类') !== fn) return false;
                 if (st && (q.sentenceStructure || '未分类') !== st) return false;
                 if (pu && (q.purpose || '未分类') !== pu) return false;
+                if (df && String(q.difficulty || 3) !== df) return false;
                 if (kw) {
                     const hay = (q.prompt + ' ' + q.questionText + ' ' + q.correctAnswer + ' ' + (q.source || '')).toLowerCase();
                     if (!hay.includes(kw)) return false;
@@ -457,8 +487,9 @@
         }
 
         function resetAllFilters() {
-            ['fScenario', 'fPolarity', 'fFunction', 'fStructure', 'fPurpose'].forEach(id => {
-                document.getElementById(id).value = '';
+            ['fScenario', 'fPolarity', 'fFunction', 'fStructure', 'fPurpose', 'fDifficulty'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
             });
             document.getElementById('fKeyword').value = '';
             if (pool.mode !== 'bank') { exitSpecialMode(); return; }
@@ -476,7 +507,7 @@
             const s = (source || '').trim();
             if (s && s !== 'None') return s;
             const m = (id || '').match(/^(.*?)_W_/);
-            if (m && m[1]) return m[1];
+            if (m && m[1]) return m[1].replace(/^official/i, '');
             if (date) return String(date).slice(0, 10);
             return '未分组';
         }
@@ -484,11 +515,17 @@
         function getSets() {
             const map = new Map();   // setId -> {id, date, questions[]}
             questions.forEach(q => {
-                const sid = q.source || deriveSetId(q.source, q.id, q.date);
-                if (!map.has(sid)) map.set(sid, { id: sid, date: q.date || '', questions: [] });
-                const set = map.get(sid);
-                set.questions.push(q);
-                if (!set.date && q.date) set.date = q.date;
+                // 套题归属：优先 setIds 数组（多套共享题按归属分别入套），退回 source 单值
+                const sids = (Array.isArray(q.setIds) && q.setIds.length > 0)
+                    ? q.setIds
+                    : (q.source || deriveSetId(q.source, q.id, q.date)).split(';').map(s => s.trim()).filter(Boolean);
+                sids.forEach(sid => {
+                    if (!sid) return;
+                    if (!map.has(sid)) map.set(sid, { id: sid, date: q.date || '', questions: [] });
+                    const set = map.get(sid);
+                    if (!set.questions.includes(q)) set.questions.push(q);
+                    if (!set.date && q.date) set.date = q.date;
+                });
             });
             const list = Array.from(map.values());
             list.sort((a, b) => (a.date || '9999').localeCompare(b.date || '9999') || a.id.localeCompare(b.id));
@@ -849,6 +886,19 @@
             promptText.textContent = currentQuestion.prompt || '（无背景材料）';
             currentNum.textContent = currentQuestionIndex + 1;
             totalNum.textContent = pool.list.length;
+            // 难度星标（金色实星，题号旁）
+            const dEl = document.getElementById('difficultyStars');
+            if (dEl) dEl.innerHTML = diffStarsHTML(currentQuestion.difficulty);
+            // 来源徽章（背景材料标签旁，显示所属套题名）
+            const srcEl = document.getElementById('sourceBadge');
+            if (srcEl) {
+                const sids = (Array.isArray(currentQuestion.setIds) && currentQuestion.setIds.length > 0)
+                    ? currentQuestion.setIds
+                    : (currentQuestion.source || '').split(';').map(s => s.trim()).filter(Boolean);
+                srcEl.innerHTML = sids.length
+                    ? `<span class="src-badge" title="题目来源：${escapeHtml(sids.join('、'))}">📌 ${sids.map(s => escapeHtml(s)).join(' · ')}</span>`
+                    : '';
+            }
             progressFill.style.width = `${((currentQuestionIndex + 1) / pool.list.length) * 100}%`;
 
             renderSentence();

@@ -651,6 +651,49 @@
             color: var(--primary-color);
         }
 
+        .difficulty-stars {
+            font-size: 0.85em;
+            letter-spacing: 1px;
+            vertical-align: 1px;
+            cursor: default;
+        }
+
+        .difficulty-stars .ds-on {
+            color: var(--accent-color);
+        }
+
+        .difficulty-stars .ds-off {
+            color: #D8D3C8;
+        }
+
+        .diff-cell {
+            white-space: nowrap;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        .diff-cell .ds-on {
+            color: var(--accent-color);
+        }
+
+        .diff-cell .ds-off {
+            color: #DDD8CD;
+        }
+
+        .src-badge {
+            display: inline-block;
+            margin-left: 8px;
+            padding: 2px 10px;
+            border-radius: 10px;
+            background: #EBEFF3;
+            color: #5A6A7E;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            vertical-align: 1px;
+            cursor: default;
+        }
+
         .progress-bar {
             flex: 1;
             min-width: 200px;
@@ -1389,6 +1432,7 @@
                 <select id="fFunction"><option value="">全部句子功能</option></select>
                 <select id="fStructure"><option value="">全部句子结构</option></select>
                 <select id="fPurpose"><option value="">全部交际目的</option></select>
+                <select id="fDifficulty"><option value="">全部难度</option></select>
                 <input type="text" id="fKeyword" placeholder="🔍 关键词：题干 / 材料 / 答案">
                 <button class="btn-clear-filter" id="fReset">✕ 清除筛选</button>
                 <span class="result-count" id="resultCount"></span>
@@ -1404,7 +1448,7 @@
 
             <div class="question-container" id="questionContainer" style="display: none;">
                 <div class="question-header">
-                    <div class="question-number">题目 <span id="currentNum">1</span> / <span id="totalNum">50</span></div>
+                    <div class="question-number">题目 <span id="currentNum">1</span> / <span id="totalNum">50</span> <span id="difficultyStars" class="difficulty-stars" title="难度"></span></div>
                     <div class="progress-bar">
                         <div class="progress-fill" id="progressFill" style="width: 2%"></div>
                     </div>
@@ -1412,7 +1456,7 @@
                 </div>
 
                 <div class="prompt-box">
-                    <div class="prompt-label">背景材料</div>
+                    <div class="prompt-label">背景材料 <span id="sourceBadge"></span></div>
                     <div class="prompt-text" id="promptText"></div>
                 </div>
 
@@ -1585,6 +1629,7 @@
                 <select id="btFunction"><option value="">全部句子功能</option></select>
                 <select id="btStructure"><option value="">全部句子结构</option></select>
                 <select id="btPurpose"><option value="">全部交际目的</option></select>
+                <select id="btDifficulty"><option value="">全部难度</option></select>
                 <button class="btn btn-outline" id="btReset" style="padding:6px 14px;font-size:13px;">✕ 清除</button>
             </div>
             <div class="bt-table-wrap" id="btTableWrap"></div>
