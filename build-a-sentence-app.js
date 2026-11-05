@@ -528,7 +528,9 @@
                 });
             });
             const list = Array.from(map.values());
-            list.sort((a, b) => (a.date || '9999').localeCompare(b.date || '9999') || a.id.localeCompare(b.id));
+            // 按套题编号中的日期升序（20260121A → 20260930C）；编号中无日期的排最后
+            const dateNumOf = id => { const m = String(id).match(/(\d{8})/); return m ? m[1] : '99999999'; };
+            list.sort((a, b) => dateNumOf(a.id).localeCompare(dateNumOf(b.id)) || a.id.localeCompare(b.id));
             return list;
         }
 
@@ -589,7 +591,6 @@
                     <div class="set-card">
                         <div class="set-head">
                             <span class="set-no">第 ${n} 套</span>
-                            <span class="set-date">${escapeHtml(set.date || '')}</span>
                         </div>
                         <div class="set-name">${escapeHtml(set.id)}</div>
                         <div class="set-meta">${total} 题 · ${statusPill}</div>
