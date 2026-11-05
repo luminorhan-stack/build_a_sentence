@@ -1,8 +1,8 @@
 # TOEFL Writing Build a Sentence
 
-托福句子构建练习系统。基于 2026 年新托福写作 Sentence Building 题型开发，内置 **963 道** Build a Sentence 真题（覆盖 2026 年 1–9 月全部考试套题），含五维标签标注与难度分级，支持按套题刷题、按语法点专项练习、难度筛选和错题管理。
+托福句子构建练习系统。基于 2026 年新托福写作 Sentence Building 题型开发，内置 **771 道** Build a Sentence 真题（覆盖 2026 年 1–9 月全部考试套题，按题干去重后的权威版本），含五维标签标注与难度分级，支持按套题刷题、按语法点专项练习、难度筛选和错题管理。
 
-题库版本：`bs625-20261104v4`（963 题 / 130 套）
+题库版本：`bs625-20261105v4.2`（771 题 / 130 套）
 
 ## 功能
 
@@ -18,7 +18,7 @@
 
 ```
 ├── index.html               # 页面结构与样式（约 52KB）
-├── build-a-sentence-data.js # 题库数据：BANK_VERSION + EMBEDDED_BANK（963 题，约 650KB）
+├── build-a-sentence-data.js # 题库数据：BANK_VERSION + EMBEDDED_BANK（771 题，约 560KB）
 └── build-a-sentence-app.js  # 全部交互逻辑（练习/判分/筛选/统计/总表/错题本）
 ```
 
