@@ -124,6 +124,12 @@
             document.getElementById('reuploadBtn').addEventListener('click', reuploadFile);
             document.getElementById('bannerExit').addEventListener('click', exitSpecialMode);
 
+            // 题号跳转
+            document.getElementById('jumpBtn').addEventListener('click', jumpToQuestionNum);
+            document.getElementById('jumpInput').addEventListener('keydown', e => {
+                if (e.key === 'Enter') { e.preventDefault(); jumpToQuestionNum(); }
+            });
+
             // 筛选
             ['fScenario', 'fPolarity', 'fFunction', 'fStructure', 'fPurpose', 'fDifficulty'].forEach(id => {
                 const el = document.getElementById(id);
@@ -417,6 +423,45 @@
             currentQuestionIndex = i;
             displayQuestion();
         };
+
+        /* ================================================================
+         * 题号跳转
+         * ================================================================ */
+        function jumpToQuestionNum() {
+            const input = document.getElementById('jumpInput');
+            const raw = input.value.trim();
+            const total = pool.list.length;
+
+            // 边界校验：空 / 非数字 / 超范围 → 友好提示（复用 feedback 样式，不报错）
+            const bad = (msg) => {
+                input.classList.remove('shake');
+                void input.offsetWidth;           // 重置动画
+                input.classList.add('shake');
+                const fb = document.getElementById('feedback');
+                fb.className = 'feedback show incorrect';
+                fb.textContent = msg;
+                setTimeout(() => { if (fb.textContent === msg) { fb.className = 'feedback'; fb.textContent = ''; } }, 2000);
+            };
+
+            if (!raw) { bad('⚠ 请输入题号后再跳转'); return; }
+            if (!/^\d+$/.test(raw)) { bad(`⚠ 题号需为数字，"${raw.slice(0, 12)}" 无法识别`); return; }
+            const n = parseInt(raw, 10);
+            if (n < 1 || n > total) { bad(`⚠ 题号超出范围，当前题库共 ${total} 题（1 – ${total}）`); return; }
+
+            // 套题/错题模式下池已被裁剪：题号基于完整题库，先退出特殊模式回到全库
+            if (setSession) { exitSpecialMode(); }
+            currentQuestionIndex = n - 1;
+            displayQuestion();
+            input.value = '';
+            input.blur();
+
+            // 视觉定位：滚动到题目区 + 短暂高亮
+            const container = document.getElementById('questionContainer');
+            container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            container.classList.remove('jump-flash');
+            void container.offsetWidth;
+            container.classList.add('jump-flash');
+        }
 
         /* ================================================================
          * 多维度筛选
