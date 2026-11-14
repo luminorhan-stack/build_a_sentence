@@ -651,6 +651,54 @@
             color: var(--primary-color);
         }
 
+        /* 题号跳转 */
+        .jump-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .jump-input {
+            width: 72px;
+            padding: 7px 10px;
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        .jump-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 102, 51, .12);
+        }
+
+        .jump-btn {
+            padding: 7px 14px;
+            font-size: 14px;
+        }
+
+        .jump-input.shake {
+            animation: jumpShake .35s;
+        }
+
+        @keyframes jumpShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+
+        /* 跳转成功后的题目区高亮 */
+        .question-container.jump-flash {
+            animation: jumpFlash 1.2s ease-out;
+        }
+
+        @keyframes jumpFlash {
+            0% { box-shadow: 0 0 0 0 rgba(0, 102, 51, .35); border-radius: 12px; }
+            100% { box-shadow: 0 0 0 14px rgba(0, 102, 51, 0); border-radius: 12px; }
+        }
+
         .difficulty-stars {
             font-size: 0.85em;
             letter-spacing: 1px;
@@ -1449,6 +1497,11 @@
             <div class="question-container" id="questionContainer" style="display: none;">
                 <div class="question-header">
                     <div class="question-number">题目 <span id="currentNum">1</span> / <span id="totalNum">50</span> <span id="difficultyStars" class="difficulty-stars" title="难度"></span></div>
+                    <div class="jump-box">
+                        <input type="text" id="jumpInput" class="jump-input" placeholder="题号"
+                               inputmode="numeric" autocomplete="off" maxlength="4" title="输入题号跳转">
+                        <button class="btn btn-outline jump-btn" id="jumpBtn" title="跳转到指定题号">跳转</button>
+                    </div>
                     <div class="progress-bar">
                         <div class="progress-fill" id="progressFill" style="width: 2%"></div>
                     </div>
